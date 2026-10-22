@@ -1,0 +1,20 @@
+{
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "node scripts/dev.mjs",
+    "doctor": "node scripts/doctor.mjs",
+    "test:store": "node scripts/store-smoke.mjs",
+    "check": "node scripts/check.mjs",
+    "build": "node scripts/build.mjs"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "name": "airc-vibe-page",
+  "description": "Dependency-free AIRC starter for a landing page, lead form, or visual story.",
+  "license": "MIT",
+  "repository": "https://github.com/FocusSam/airc-vibe-page",
+  "homepage": "https://focussam.github.io/airc-vibe-page/"
+}
