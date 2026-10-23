@@ -23,11 +23,29 @@ import {
 } from "./ui.js";
 import { renderStyleguide } from "./styleguide.js";
 
-const nav = (active) => [
-  { href: "#/", label: "Главная", active: active === "/" },
-  { href: "#/story", label: "Программа", active: active === "/story" },
-  { href: "#/workspace", label: "Ответы", active: active === "/workspace" },
+const invitationNav = () => [
+  { href: "#request", label: project.cta, active: false },
 ];
+
+function invitationIcon(name) {
+  const paths = {
+    clock: '<circle cx="12" cy="12" r="8.5"/><path d="M12 7v5l3.5 2"/>',
+    pin: '<path d="M12 21s6-5.2 6-11a6 6 0 1 0-12 0c0 5.8 6 11 6 11Z"/><circle cx="12" cy="10" r="2"/>',
+    welcome: '<path d="M4 19h16M6.5 19v-8l5.5-4 5.5 4v8M9 19v-4h6v4"/><path d="M3.5 8.5h17"/>',
+    rings: '<circle cx="9.5" cy="13.5" r="3.5"/><circle cx="14.5" cy="13.5" r="3.5"/><path d="m9.5 10-1-2h2l-1 2m5 0-1-2h2l-1 2"/>',
+    dinner: '<path d="M7 4v7M4.5 4v4a2.5 2.5 0 0 0 5 0V4M7 11v9M16.5 4v16M16.5 4c2.2 1.2 2.2 5.8 0 7"/>',
+  };
+  return `<svg class="line-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">${paths[name] || paths.clock}</svg>`;
+}
+
+function coupleMonogram(compact = false) {
+  return `
+    <div class="couple-monogram${compact ? " couple-monogram--compact" : ""}" role="img" aria-label="Инициалы Анны и Михаила">
+      <span class="couple-monogram__letters" aria-hidden="true">А<br>М</span>
+      <img class="couple-monogram__sprig" src="./src/assets/botanical-hearts.png" alt="" aria-hidden="true">
+    </div>
+  `;
+}
 
 function renderParticipantFields(count, participants = []) {
   return Array.from({ length: count }, (_, index) => {
@@ -83,45 +101,100 @@ function attendanceLabel(payload) {
 async function renderHome() {
   const familyCode = familyCodeFromSearch(location.search);
   const responseEndpoint = configuredResponseEndpoint();
+  const program = project.benefits.find((item) => Array.isArray(item.schedule));
+  const guestInfo = project.benefits.find((item) => !Array.isArray(item.schedule));
   renderShell({
     title: `${project.name} — ${project.title}`,
-    nav: [...nav("/"), { href: "#/styleguide", label: "Стиль", active: false }],
+    nav: invitationNav(),
     content: `
-      <section class="hero">
-        <div class="container hero-grid">
-          <div>
-            <p class="eyebrow">${escapeHtml(project.eyebrow)}</p>
-            <h1>${escapeHtml(project.title)}</h1>
-            <p class="lead">${escapeHtml(project.lead)}</p>
-            <div class="actions">
-              <a class="button" href="#request">${escapeHtml(project.cta)}</a>
-              <a class="button button--secondary" href="#/story">${escapeHtml(project.secondaryCta)}</a>
+      <section class="invitation-layout invitation-story" aria-label="Свадебное приглашение">
+        <article class="invitation-panel invitation-panel--hero">
+          <img class="botanical botanical--hero" src="./src/assets/botanical-hearts.png" alt="" aria-hidden="true">
+          ${coupleMonogram()}
+          <p class="panel-kicker">Вместе с семьями</p>
+          <h1 class="couple-names">Анна <span>и</span> Михаил</h1>
+          <span class="ornament" aria-hidden="true">♥</span>
+          <p class="panel-date">${escapeHtml(project.event.date)}</p>
+          <figure class="portrait portrait--hero gold-frame photo-frame--arched">
+            <img class="portrait-image" src="./src/assets/wedding-hero.png" alt="Вымышленная пара в саду на закате">
+          </figure>
+          <p class="panel-note">Дорогие родные и друзья! Мы будем счастливы разделить с вами день, когда начнётся новая глава нашей истории. Сохраните эту дату и приезжайте обнимать нас, улыбаться, говорить тёплые слова и танцевать вместе до самого вечера.</p>
+          <p class="muted small">Имена, дата, место и программа на этой странице — демонстрационные.</p>
+        </article>
+
+        <div class="story-wave story-wave--cream-olive" aria-hidden="true">
+          <img class="wave-botanical wave-botanical--left" src="./src/assets/botanical-hearts.png" alt="" aria-hidden="true">
+          <svg viewBox="0 0 1440 96" preserveAspectRatio="none" focusable="false"><path fill="currentColor" d="M0,48 C116,78 238,76 358,47 C525,7 654,19 791,54 C950,94 1110,83 1245,44 C1338,17 1397,18 1440,26 L1440,96 L0,96 Z" /></svg>
+        </div>
+
+        <article id="program" class="invitation-panel invitation-panel--program">
+          <img class="botanical botanical--program" src="./src/assets/botanical-hearts.png" alt="" aria-hidden="true">
+          <p class="panel-kicker">Наш день</p>
+          <h2>Программа</h2>
+          <span class="ornament" aria-hidden="true">♥</span>
+          <ol class="schedule schedule--panel">
+            ${(program?.schedule || []).map((entry) => `
+              <li>
+                <span class="schedule-icon">${invitationIcon(entry.icon)}</span>
+                <time>${escapeHtml(entry.time)}</time>
+                <span class="schedule-content"><strong>${escapeHtml(entry.text)}</strong><small>${escapeHtml(entry.description || "")}</small></span>
+              </li>
+            `).join("")}
+          </ol>
+          <div class="program-footer">
+            <p class="panel-kicker">Дресс-код</p>
+            <p>Нам будет особенно приятно, если вы поддержите спокойную природную палитру праздника. Выбирайте оливковые, шалфейные, кремовые и тёплые бежевые оттенки. Это пожелание, а не строгое правило — главное, чтобы вам было комфортно.</p>
+            <div class="dress-palette" role="list" aria-label="Палитра дресс-кода">
+              <span class="dress-swatch dress-swatch--olive" role="listitem" aria-label="Тёмный оливковый"></span>
+              <span class="dress-swatch dress-swatch--sage" role="listitem" aria-label="Приглушённый шалфейный"></span>
+              <span class="dress-swatch dress-swatch--stone" role="listitem" aria-label="Серо-бежевый"></span>
+              <span class="dress-swatch dress-swatch--cream" role="listitem" aria-label="Кремовый"></span>
+              <span class="dress-swatch dress-swatch--gold" role="listitem" aria-label="Неброский золотистый"></span>
             </div>
           </div>
-          <aside class="panel">
-            <span class="badge">Дорогим гостям</span>
-            <h2 style="margin-top:18px;font-size:32px">Анна и Михаил</h2>
-            <p>${escapeHtml(project.audience)}</p>
-            <p class="muted small">Имена, дата, место и программа — демонстрационные.</p>
-          </aside>
+        </article>
+
+        <div class="story-wave story-wave--olive-cream" aria-hidden="true">
+          <img class="wave-botanical wave-botanical--right" src="./src/assets/botanical-hearts.png" alt="" aria-hidden="true">
+          <svg viewBox="0 0 1440 96" preserveAspectRatio="none" focusable="false"><path fill="currentColor" d="M0,32 C157,9 264,8 408,34 C555,61 663,82 806,63 C975,40 1035,7 1180,22 C1293,34 1371,62 1440,49 L1440,96 L0,96 Z" /></svg>
         </div>
+
+        <article id="details" class="invitation-panel invitation-panel--guests">
+          <img class="botanical botanical--guests" src="./src/assets/botanical-hearts.png" alt="" aria-hidden="true">
+          <p class="panel-kicker">Для гостей</p>
+          <h2>Где и когда</h2>
+          <p class="guest-intro">Мы соберёмся за городом, вдали от городской суеты. Пожалуйста, приезжайте немного заранее, чтобы спокойно познакомиться с площадкой и встретиться с другими гостями.</p>
+          <dl class="guest-details">
+            <div>
+              <dt>${invitationIcon("clock")}<span>Время</span></dt>
+              <dd>${escapeHtml(project.event.time)}</dd>
+            </div>
+            <div>
+              <dt>${invitationIcon("pin")}<span>Место</span></dt>
+              <dd>${escapeHtml(project.event.place)}</dd>
+            </div>
+          </dl>
+          <p class="guest-demo-note">Адрес указан для демонстрации и будет заменён владельцем перед настоящим запуском.</p>
+          <figure class="portrait portrait--dinner gold-frame photo-frame--dinner">
+            <img class="portrait-image" src="./src/assets/wedding-dinner.png" alt="Вымышленный праздничный ужин в саду">
+          </figure>
+          <div class="guest-response">
+            <h3>${escapeHtml(guestInfo?.title || "Будете с нами?")}</h3>
+            <p>${escapeHtml(guestInfo?.text || "")}</p>
+            <a class="button" href="#request">${escapeHtml(project.cta)}</a>
+          </div>
+        </article>
       </section>
 
-      <section class="section section--soft">
-        <div class="container grid grid-3">
-          ${project.benefits.map((item) => `
-            <article class="card">
-              <h3>${escapeHtml(item.title)}</h3>
-              <p>${escapeHtml(item.text)}</p>
-            </article>
-          `).join("")}
-        </div>
-      </section>
+      <div class="story-wave story-wave--cream-sage" aria-hidden="true">
+        <img class="wave-botanical wave-botanical--left wave-botanical--sage" src="./src/assets/botanical-hearts.png" alt="" aria-hidden="true">
+        <svg viewBox="0 0 1440 96" preserveAspectRatio="none" focusable="false"><path fill="currentColor" d="M0,60 C130,24 237,30 363,52 C522,80 615,80 774,50 C920,23 1039,21 1164,45 C1285,69 1365,74 1440,42 L1440,96 L0,96 Z" /></svg>
+      </div>
 
-      <section id="request" class="section">
-        <div class="container grid grid-2">
+      <section id="request" class="section response-section">
+        <div class="container response-container">
           <div>
-            <p class="eyebrow">Ответ на приглашение</p>
+            <p class="eyebrow">Ваш ответ</p>
             <h2>${escapeHtml(project.form.title)}</h2>
             <p class="lead">${escapeHtml(project.form.note)}</p>
           </div>
@@ -157,13 +230,24 @@ async function renderHome() {
             </div>
             <p id="form-error" class="field-error" hidden></p>
             <p id="form-status" class="form-status" hidden role="status"></p>
-            <button class="button" type="submit">${escapeHtml(project.cta)}</button>
+            <button class="button" type="submit">${escapeHtml(project.submitCta)}</button>
           </form>
         </div>
       </section>
+
+      <div class="story-wave story-wave--sage-cream" aria-hidden="true">
+        <img class="wave-botanical wave-botanical--right wave-botanical--closing-wave" src="./src/assets/botanical-hearts.png" alt="" aria-hidden="true">
+        <svg viewBox="0 0 1440 96" preserveAspectRatio="none" focusable="false"><path fill="currentColor" d="M0,38 C119,63 233,78 378,58 C508,40 589,9 719,21 C870,35 970,77 1114,63 C1258,49 1344,21 1440,35 L1440,96 L0,96 Z" /></svg>
+      </div>
+
+      <section class="closing-note" aria-label="Завершение приглашения">
+        <img class="botanical botanical--closing" src="./src/assets/botanical-hearts.png" alt="" aria-hidden="true">
+        ${coupleMonogram(true)}
+        <p class="panel-kicker">До встречи</p>
+        <p>Спасибо, что заглянули на нашу страницу. Нам очень хочется провести этот день рядом с дорогими людьми — спокойно, тепло и по-настоящему душевно. Будем рады разделить этот праздник вместе с вами.</p>
+      </section>
     `,
   });
-
   const leadForm = qs("#lead-form");
   if (!familyCode) {
     leadForm.innerHTML = `
@@ -201,7 +285,7 @@ async function renderHome() {
     if (attendanceInput) attendanceInput.checked = true;
     guestCountInput.value = String(payload.guest_count || 1);
     showAttendanceFields(payload.attendance, payload.participants || []);
-    submitButton.textContent = project.form.updateCta;
+    submitButton.textContent = project.submitCta;
     formStatus.textContent = project.form.restoredLocal;
     formStatus.hidden = false;
   }
@@ -260,7 +344,7 @@ async function renderHome() {
       error.hidden = false;
     } finally {
       submitButton.disabled = false;
-      submitButton.textContent = currentResponse ? project.form.updateCta : project.cta;
+      submitButton.textContent = project.submitCta;
     }
   });
 }
@@ -268,7 +352,10 @@ async function renderHome() {
 function renderStory() {
   renderShell({
     title: `Программа — ${project.name}`,
-    nav: [...nav("/story"), { href: "#/styleguide", label: "Стиль", active: false }],
+    nav: [
+      { href: "#/", label: "Главная", active: false },
+      { href: "#request", label: project.cta, active: false },
+    ],
     content: `
       <article class="story">
         <section class="story-scene">
@@ -361,7 +448,7 @@ async function workspaceContent() {
 async function renderWorkspace() {
   renderShell({
     title: `Ответы гостей — ${project.name}`,
-    nav: [...nav("/workspace"), { href: "#/styleguide", label: "Стиль", active: false }],
+    nav: [{ href: "#/", label: "Приглашение", active: false }],
     content: '<section class="section"><div class="container"><p>Загружаю записи…</p></div></section>',
   });
 

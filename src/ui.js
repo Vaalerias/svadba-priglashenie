@@ -52,7 +52,6 @@ export function renderShell({ title, nav, content }) {
     <div id="global-notice" class="notice" hidden role="status" aria-live="polite"></div>
     <footer class="site-footer">
       <span>Наша свадьба · демонстрационная версия</span>
-      <a href="#/styleguide">Стиль проекта</a>
     </footer>
   `;
 }
